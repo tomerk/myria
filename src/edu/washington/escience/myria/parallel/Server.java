@@ -3,7 +3,9 @@ package edu.washington.escience.myria.parallel;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.SequenceInputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2278,6 +2280,30 @@ public final class Server implements TaskMessageSource, EventHandler<DriverMessa
   public Object getQueryGlobal(final long queryId, @Nonnull final String key) {
     Preconditions.checkNotNull(key, "key");
     return queryManager.getQuery(queryId).getGlobal(key);
+  }
+
+  /**
+   * Registers the {@link InputStream} corresponding to an output of the specified query.
+   * NB: The output is an {@link InputStream} rather than an {@link OutputStream} because callers want to read it.
+   *
+   * @param queryId the query producing this output
+   * @param queryOutput the {@link InputStream} corresponding to this output
+   */
+  public void registerQueryOutput(final long queryId, @Nonnull final InputStream queryOutput) {
+    Preconditions.checkNotNull(queryOutput, "queryOutput");
+    queryManager.getQuery(queryId).registerOutput(queryOutput);
+  }
+
+  /**
+   * Returns an {@link InputStream} containing all registered outputs of the specified query,
+   * in order of registration.
+   * NB: The output is an {@link InputStream} rather than an {@link OutputStream} because callers want to read it.
+   *
+   * @param queryId the query producing this output
+   */
+  public InputStream getQueryOutput(final long queryId) {
+    return new SequenceInputStream(
+        Collections.enumeration(queryManager.getQuery(queryId).getRegisteredOutputs()));
   }
 
   /**
