@@ -359,7 +359,8 @@ public class QueryConstruct {
    */
   private static void setAndVerifySingletonConstraints(
       final List<PlanFragmentEncoding> fragments, final ConstructArgs args) {
-    List<Integer> singletonWorkers = ImmutableList.of(MyriaConstants.MASTER_ID);
+    List<Integer> singletonWorkers =
+        ImmutableList.of(args.getServer().getAliveWorkers().iterator().next());
 
     for (PlanFragmentEncoding fragment : fragments) {
       for (OperatorEncoding<?> operator : fragment.operators) {
@@ -378,7 +379,11 @@ public class QueryConstruct {
             LOGGER.warn(
                 "{} operator can only be instantiated on a single worker, assigning to random worker",
                 operatorTypeName);
-            fragment.workers = singletonWorkers;
+            if (operator instanceof StreamingSinkEncoding) {
+              fragment.workers = ImmutableList.of(MyriaConstants.MASTER_ID);
+            } else {
+              fragment.workers = singletonWorkers;
+            }
           } else {
             Preconditions.checkArgument(
                 fragment.workers.size() == 1,
