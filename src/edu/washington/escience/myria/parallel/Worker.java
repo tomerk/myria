@@ -117,6 +117,10 @@ public final class Worker {
                   connectionPool.putRemote(workerId, SocketInfo.fromProtobuf(cm.getRemoteAddress()));
                   sendMessageToMaster(IPCUtils.addWorkerAckTM(workerId));
                   break;
+                case SYSTEM_GC: {
+                  System.gc();
+                  break;
+                }
                 default:
                   if (LOGGER.isErrorEnabled()) {
                     LOGGER.error("Unexpected control message received at worker: " + cm.getType());
@@ -138,12 +142,12 @@ public final class Worker {
 
   /**
    * Query related command from master.
-   * */
+   */
   static final class QueryCommand {
     /**
      * @param q the target query.
      * @param queryMsg the command message.
-     * */
+     */
     public QueryCommand(final WorkerSubQuery q, final QueryMessage queryMsg) {
       this.q = q;
       this.queryMsg = queryMsg;
@@ -151,12 +155,12 @@ public final class Worker {
 
     /**
      * the target query.
-     * */
+     */
     private final WorkerSubQuery q;
 
     /**
      * the command message.
-     * */
+     */
     private final QueryMessage queryMsg;
   }
   /**
@@ -398,11 +402,12 @@ public final class Worker {
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(final Thread t, final Throwable e) {
+        LOGGER.info("Uncaught exception in thread: " + t, e);
         if (LOGGER.isErrorEnabled()) {
           LOGGER.error("Uncaught exception in thread: " + t, e);
         }
         if (e instanceof OutOfMemoryError) {
-          JVMUtils.shutdownVM();
+          JVMUtils.shutdownVM(e);
         }
       }
     });
