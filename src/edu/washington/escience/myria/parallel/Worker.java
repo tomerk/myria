@@ -165,6 +165,11 @@ public final class Worker implements Task, TaskMessageSource {
                       workerId, SocketInfo.fromProtobuf(cm.getRemoteAddress()));
                   sendMessageToMaster(IPCUtils.addWorkerAckTM(workerId));
                   break;
+                case SYSTEM_GC:
+                  {
+                    System.gc();
+                    break;
+                  }
                 default:
                   if (LOGGER.isErrorEnabled()) {
                     LOGGER.error("Unexpected control message received at worker: " + cm.getType());

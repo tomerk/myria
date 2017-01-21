@@ -129,6 +129,12 @@ public final class IPCUtils {
               ControlMessage.newBuilder().setType(ControlMessage.Type.WORKER_HEARTBEAT))
           .build();
 
+  public static final TransportMessage CONTROL_SYSTEM_GC =
+      TransportMessage.newBuilder()
+          .setType(TransportMessage.Type.CONTROL)
+          .setControlMessage(ControlMessage.newBuilder().setType(ControlMessage.Type.SYSTEM_GC))
+          .build();
+
   /**
    * @param workerId the id of the worker to be removed.
    * @return the remove worker TM.
