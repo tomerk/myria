@@ -11,8 +11,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import net.jcip.annotations.Immutable;
-
 import com.almworks.sqlite4java.SQLiteConstants;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
@@ -22,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import edu.washington.escience.myria.util.MyriaUtils;
+import net.jcip.annotations.Immutable;
 
 /**
  * Schema describes the schema of a tuple.
@@ -263,9 +262,8 @@ public final class Schema implements Serializable {
   /**
    * Create a new Schema with typeAr.length columns with columns of the specified types, with associated named columns.
    * 
-   * @param columnTypes array specifying the number of and types of columns in this Schema. It must contain at least one
-   *          entry.
-   * @param columnNames array specifying the names of the columns.
+   * @param columnTypes array specifying the types of the columns. It must contain at least one entry.
+   * @param columnNames array specifying the names of the columns. Names need to be unqiue.
    */
   public Schema(final List<Type> columnTypes, final List<String> columnNames) {
     Objects.requireNonNull(columnTypes, "columnTypes");
@@ -276,14 +274,17 @@ public final class Schema implements Serializable {
     MyriaUtils.checkHasNoNulls(columnTypes, "columnTypes may not contain null elements");
     MyriaUtils.checkHasNoNulls(columnNames, "columnNames may not contain null elements");
     HashSet<String> uniqueNames = new HashSet<>();
+    List<String> newNames = new ArrayList<String>();
     for (String name : columnNames) {
       checkName(name);
-      if (!uniqueNames.add(name)) {
-        throw new IllegalArgumentException("schema has duplicated column name " + name);
+      while (!uniqueNames.add(name)) {
+        // throw new IllegalArgumentException("schema has duplicated column name " + name);
+        name = name + "_";
       }
+      newNames.add(name);
     }
     this.columnTypes = ImmutableList.copyOf(columnTypes);
-    this.columnNames = ImmutableList.copyOf(columnNames);
+    this.columnNames = ImmutableList.copyOf(newNames);
   }
 
   /**

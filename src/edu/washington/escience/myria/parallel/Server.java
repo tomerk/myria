@@ -389,7 +389,7 @@ public final class Server {
   /**
    * @return my connection pool for IPC.
    */
-  IPCConnectionPool getIPCConnectionPool() {
+  public IPCConnectionPool getIPCConnectionPool() {
     return connectionPool;
   }
 
@@ -497,7 +497,7 @@ public final class Server {
    * guarantee message synchronization. Once we have a generalized design in the IPC layer in the future, it can be
    * removed.
    */
-  private Thread sendAddWorker = null;
+  private final Thread sendAddWorker = null;
 
   /**
    * The thread to check received REMOVE_WORKER_ACK and send ADD_WORKER to each worker.
@@ -577,10 +577,11 @@ public final class Server {
           aliveWorkers.remove(workerId);
           queryManager.workerDied(workerId);
 
-          removeWorkerAckReceived.put(workerId, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
-          addWorkerAckReceived.put(workerId, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
+          // removeWorkerAckReceived.put(workerId, Collections.newSetFromMap(new ConcurrentHashMap<Integer,
+          // Boolean>()));
+          // addWorkerAckReceived.put(workerId, Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>()));
           /* for using containsAll() later */
-          addWorkerAckReceived.get(workerId).add(workerId);
+          // addWorkerAckReceived.get(workerId).add(workerId);
           try {
             /* remove the failed worker from the connectionPool. */
             connectionPool.removeRemote(workerId).await();
@@ -589,26 +590,26 @@ public final class Server {
             return;
           }
           /* tell other workers to remove it too. */
-          for (int aliveWorkerId : aliveWorkers.keySet()) {
-            connectionPool.sendShortMessage(aliveWorkerId, IPCUtils.removeWorkerTM(workerId));
-          }
+          // for (int aliveWorkerId : aliveWorkers.keySet()) {
+          // connectionPool.sendShortMessage(aliveWorkerId, IPCUtils.removeWorkerTM(workerId));
+          // }
 
           /* Temporary solution: using exactly the same hostname:port. One good thing is the data is still there. */
           /* Temporary solution: using exactly the same worker id. */
-          String newAddress = workers.get(workerId).getHost();
-          int newPort = workers.get(workerId).getPort();
-          int newWorkerId = workerId;
+          // String newAddress = workers.get(workerId).getHost();
+          // int newPort = workers.get(workerId).getPort();
+          // int newWorkerId = workerId;
 
           /* a new worker will be launched, put its information in scheduledWorkers. */
-          scheduledWorkers.put(newWorkerId, new SocketInfo(newAddress, newPort));
-          scheduledWorkersTime.put(newWorkerId, currentTime);
+          // scheduledWorkers.put(newWorkerId, new SocketInfo(newAddress, newPort));
+          // scheduledWorkersTime.put(newWorkerId, currentTime);
 
-          sendAddWorker =
-              new Thread(new SendAddWorker(newWorkerId, new SocketInfo(newAddress, newPort), aliveWorkers.size()));
-          connectionPool.putRemote(newWorkerId, new SocketInfo(newAddress, newPort));
+          // sendAddWorker =
+          // new Thread(new SendAddWorker(newWorkerId, new SocketInfo(newAddress, newPort), aliveWorkers.size()));
+          // connectionPool.putRemote(newWorkerId, new SocketInfo(newAddress, newPort));
 
           /* start a thread to launch the new worker. */
-          new Thread(new NewWorkerScheduler(newWorkerId, newAddress, newPort)).start();
+          // new Thread(new NewWorkerScheduler(newWorkerId, newAddress, newPort)).start();
         }
       }
       for (Integer workerId : scheduledWorkers.keySet()) {

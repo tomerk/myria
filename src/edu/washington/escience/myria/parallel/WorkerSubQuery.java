@@ -108,8 +108,8 @@ public class WorkerSubQuery extends LocalSubQuery {
       if (currentNumFinished >= fragments.size()) {
         getExecutionStatistics().markEnd();
         if (LOGGER.isInfoEnabled()) {
-          LOGGER.info("Query #{} executed for {}", getSubQueryId(), DateTimeUtils
-              .nanoElapseToHumanReadable(getExecutionStatistics().getQueryExecutionElapse()));
+          LOGGER.info("Query #{} executed for {}", getSubQueryId(), DateTimeUtils.nanoElapseToHumanReadable(
+              getExecutionStatistics().getQueryExecutionElapse()));
         }
         if (getProfilingMode().size() > 0) {
           try {
@@ -134,8 +134,8 @@ public class WorkerSubQuery extends LocalSubQuery {
         }
       } else {
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("New finished fragment: {}. {} remain.", drivingFragment,
-              (fragments.size() - currentNumFinished));
+          LOGGER.debug("New finished fragment: {}. {} remain.", drivingFragment, (fragments.size()
+              - currentNumFinished));
         }
       }
     }
@@ -166,8 +166,8 @@ public class WorkerSubQuery extends LocalSubQuery {
    * @return the {@link LocalFragment}.
    */
   public LocalFragment createFragment(final RootOperator root) {
-    final LocalFragment drivingFragment =
-        new LocalFragment(worker.getIPCConnectionPool(), this, root, worker.getQueryExecutor());
+    final LocalFragment drivingFragment = new LocalFragment(worker.getIPCConnectionPool(), this, root, worker
+        .getQueryExecutor());
     LocalFragmentFuture fragmentExecutionFuture = drivingFragment.getExecutionFuture();
     fragmentExecutionFuture.addListener(fragmentExecutionListener);
 
@@ -263,9 +263,8 @@ public class WorkerSubQuery extends LocalSubQuery {
           scan.setOpId(newOpId);
           newOpId++;
           scan.setOpName("tuplesource for " + fragment.getRootOp().getOpName() + channels[j].getID());
-          RecoverProducer rp =
-              new RecoverProducer(scan, ExchangePairID.fromExisting(channels[j].getID().getStreamID()), channels[j]
-                  .getID().getRemoteID(), (Producer) fragment.getRootOp(), j);
+          RecoverProducer rp = new RecoverProducer(scan, ExchangePairID.fromExisting(channels[j].getID().getStreamID()),
+              channels[j].getID().getRemoteID(), (Producer) fragment.getRootOp(), j);
           rp.setOpId(newOpId);
           newOpId++;
           rp.setOpName("recProducer_for_" + fragment.getRootOp().getOpName());
@@ -331,6 +330,14 @@ public class WorkerSubQuery extends LocalSubQuery {
     int ret = Integer.MIN_VALUE;
     for (LocalFragment t : fragments) {
       ret = Math.max(ret, t.getMaxOpId(t.getRootOp()));
+    }
+    return ret;
+  }
+
+  public String dumpOpStats(final String prefix) {
+    String ret = prefix;
+    for (LocalFragment t : fragments) {
+      ret += t.dumpOpStats(t.getRootOp());
     }
     return ret;
   }

@@ -808,7 +808,8 @@ public final class LocalFragment {
     if (op instanceof Producer) {
       addResourceReport(stats, timestamp, op, "numTuplesWritten", ((Producer) op).getNumTuplesWrittenToChannels(),
           subQueryId);
-      addResourceReport(stats, timestamp, op, "numTuplesInBuffers", ((Producer) op).getNumTuplesInBuffers(), subQueryId);
+      addResourceReport(stats, timestamp, op, "numTuplesInBuffers", ((Producer) op).getNumTuplesInBuffers(),
+          subQueryId);
     } else if (op instanceof IDBController) {
       addResourceReport(stats, timestamp, op, "numTuplesInState", ((IDBController) op).getStreamingState().numTuples(),
           subQueryId);
@@ -873,6 +874,15 @@ public final class LocalFragment {
     for (Operator child : op.getChildren()) {
       ret = Math.max(ret, getMaxOpId(child));
     }
+    return ret;
+  }
+
+  public String dumpOpStats(final Operator op) {
+    String ret = "";
+    for (Operator o : op.getChildren()) {
+      ret += dumpOpStats(o);
+    }
+    ret += op.dumpOpStats();
     return ret;
   }
 }

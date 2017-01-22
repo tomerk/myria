@@ -27,14 +27,14 @@ public final class StringColumnBuilder extends ColumnBuilder<String> {
 
   /**
    * The internal representation of the data.
-   * */
+   */
   private final String[] data;
   /** Number of elements in this column. */
   private int numStrings;
 
   /**
    * If the builder has built the column.
-   * */
+   */
   private boolean built = false;
 
   /** Constructs an empty column that can hold up to TupleBatch.BATCH_SIZE elements. */
@@ -48,7 +48,7 @@ public final class StringColumnBuilder extends ColumnBuilder<String> {
    * 
    * @param numStrings the actual num strings in the data
    * @param data the underlying data
-   * */
+   */
   private StringColumnBuilder(final String[] data, final int numStrings) {
     this.numStrings = numStrings;
     this.data = data;
@@ -83,7 +83,10 @@ public final class StringColumnBuilder extends ColumnBuilder<String> {
     if (numStrings >= TupleBatch.BATCH_SIZE) {
       throw new BufferOverflowException();
     }
-    data[numStrings++] = value;
+    StringBuffer buffer = new StringBuffer();
+    buffer.append(value);
+    data[numStrings++] = buffer.toString();;
+    // data[numStrings++] = new String(value);
     return this;
   }
 

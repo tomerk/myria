@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.washington.escience.myria.api.MyriaApiException;
 import edu.washington.escience.myria.api.encoding.QueryConstruct.ConstructArgs;
 import edu.washington.escience.myria.operator.Operator;
-import edu.washington.escience.myria.operator.SampledDbInsertTemp;
 
 /**
  * A JSON-able wrapper for the expected wire message for an operator. To add a new operator, two things need to be done.
@@ -46,6 +45,7 @@ import edu.washington.escience.myria.operator.SampledDbInsertTemp;
     @Type(name = "LocalMultiwayProducer", value = LocalMultiwayProducerEncoding.class),
     @Type(name = "Merge", value = MergeEncoding.class), @Type(name = "MergeJoin", value = MergeJoinEncoding.class),
     @Type(name = "MultiGroupByAggregate", value = MultiGroupByAggregateEncoding.class),
+    @Type(name = "MultiGroupByAggregateGC", value = MultiGroupByAggregateGCEncoding.class),
     @Type(name = "NChiladaFileScan", value = NChiladaFileScanEncoding.class),
     @Type(name = "RightHashCountingJoin", value = RightHashCountingJoinEncoding.class),
     @Type(name = "RightHashJoin", value = RightHashJoinEncoding.class),
@@ -62,6 +62,7 @@ import edu.washington.escience.myria.operator.SampledDbInsertTemp;
     @Type(name = "SinkRoot", value = SinkRootEncoding.class), @Type(name = "Split", value = SplitEncoding.class),
     @Type(name = "StatefulApply", value = StatefulApplyEncoding.class),
     @Type(name = "SymmetricHashJoin", value = SymmetricHashJoinEncoding.class),
+    @Type(name = "SymmetricHashJoinGC", value = SymmetricHashJoinGCEncoding.class),
     @Type(name = "SymmetricHashCountingJoin", value = SymmetricHashCountingJoinEncoding.class),
     @Type(name = "TableScan", value = TableScanEncoding.class),
     @Type(name = "TempInsert", value = TempInsertEncoding.class),

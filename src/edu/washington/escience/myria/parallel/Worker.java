@@ -2,10 +2,12 @@ package edu.washington.escience.myria.parallel;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -118,6 +120,14 @@ public final class Worker {
                   sendMessageToMaster(IPCUtils.addWorkerAckTM(workerId));
                   break;
                 case SYSTEM_GC: {
+                  if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("received SYSTEM_GC");
+                  }
+                  String ret = "sysgcopstats\t";
+                  for (WorkerSubQuery wqp : executingSubQueries.values()) {
+                    ret += wqp.dumpOpStats("");
+                  }
+                  System.out.println(ret);
                   System.gc();
                   break;
                 }
@@ -216,7 +226,26 @@ public final class Worker {
         }
       }
     }
+  }
 
+  private class OpStatsReporter extends TimerTask {
+    @Override
+    public synchronized void run() {
+      String ret = "";
+      for (WorkerSubQuery wqp : executingSubQueries.values()) {
+        ret += wqp.dumpOpStats("");
+      }
+      if (ret.length() > 0) {
+        ret = "opstats\t" + ret;
+        try {
+          PrintWriter w = new PrintWriter("opstats");
+          w.write(ret);
+          w.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
   }
 
   /** Send heartbeats to server periodically. */
@@ -606,17 +635,16 @@ public final class Worker {
       computingUnits.put(id, SocketInfo.valueOf(config.getHostPort(id)));
     }
 
-    int inputBufferCapacity =
-        Integer.valueOf(config.getRequired("runtime", MyriaSystemConfigKeys.OPERATOR_INPUT_BUFFER_CAPACITY));
-    int inputBufferRecoverTrigger =
-        Integer.valueOf(config.getRequired("runtime", MyriaSystemConfigKeys.OPERATOR_INPUT_BUFFER_RECOVER_TRIGGER));
-    connectionPool =
-        new IPCConnectionPool(myID, computingUnits, IPCConfigurations.createWorkerIPCServerBootstrap(this),
-            IPCConfigurations.createWorkerIPCClientBootstrap(this), new TransportMessageSerializer(),
-            new WorkerShortMessageProcessor(this), inputBufferCapacity, inputBufferRecoverTrigger);
+    int inputBufferCapacity = Integer.valueOf(config.getRequired("runtime",
+        MyriaSystemConfigKeys.OPERATOR_INPUT_BUFFER_CAPACITY));
+    int inputBufferRecoverTrigger = Integer.valueOf(config.getRequired("runtime",
+        MyriaSystemConfigKeys.OPERATOR_INPUT_BUFFER_RECOVER_TRIGGER));
+    connectionPool = new IPCConnectionPool(myID, computingUnits, IPCConfigurations.createWorkerIPCServerBootstrap(this),
+        IPCConfigurations.createWorkerIPCClientBootstrap(this), new TransportMessageSerializer(),
+        new WorkerShortMessageProcessor(this), inputBufferCapacity, inputBufferRecoverTrigger);
 
-    final String databaseSystem =
-        config.getRequired("deployment", MyriaSystemConfigKeys.WORKER_STORAGE_DATABASE_SYSTEM);
+    final String databaseSystem = config.getRequired("deployment",
+        MyriaSystemConfigKeys.WORKER_STORAGE_DATABASE_SYSTEM);
     execEnvVars.put(MyriaConstants.EXEC_ENV_VAR_DATABASE_SYSTEM, databaseSystem);
     execEnvVars.put(MyriaConstants.EXEC_ENV_VAR_NODE_ID, getID());
     execEnvVars.put(MyriaConstants.EXEC_ENV_VAR_EXECUTION_MODE, queryExecutionMode);
@@ -756,21 +784,19 @@ public final class Worker {
     // MyriaConstants.THREAD_POOL_KEEP_ALIVE_TIME_IN_MS, TimeUnit.MILLISECONDS, new RenamingThreadFactory(
     // "Pipeline executor"));
 
-    ChannelFactory clientChannelFactory =
-        new NioClientSocketChannelFactory(bossExecutor, workerExecutor,
-            Runtime.getRuntime().availableProcessors() * 2 + 1);
+    ChannelFactory clientChannelFactory = new NioClientSocketChannelFactory(bossExecutor, workerExecutor, Runtime
+        .getRuntime().availableProcessors() * 2 + 1);
 
     // Start server with Nb of active threads = 2*NB CPU + 1 as maximum.
-    ChannelFactory serverChannelFactory =
-        new NioServerSocketChannelFactory(bossExecutor, workerExecutor,
-            Runtime.getRuntime().availableProcessors() * 2 + 1);
+    ChannelFactory serverChannelFactory = new NioServerSocketChannelFactory(bossExecutor, workerExecutor, Runtime
+        .getRuntime().availableProcessors() * 2 + 1);
 
-    ChannelPipelineFactory serverPipelineFactory =
-        new IPCPipelineFactories.WorkerServerPipelineFactory(connectionPool, getPipelineExecutor());
-    ChannelPipelineFactory clientPipelineFactory =
-        new IPCPipelineFactories.WorkerClientPipelineFactory(connectionPool, getPipelineExecutor());
-    ChannelPipelineFactory workerInJVMPipelineFactory =
-        new IPCPipelineFactories.WorkerInJVMPipelineFactory(connectionPool);
+    ChannelPipelineFactory serverPipelineFactory = new IPCPipelineFactories.WorkerServerPipelineFactory(connectionPool,
+        getPipelineExecutor());
+    ChannelPipelineFactory clientPipelineFactory = new IPCPipelineFactories.WorkerClientPipelineFactory(connectionPool,
+        getPipelineExecutor());
+    ChannelPipelineFactory workerInJVMPipelineFactory = new IPCPipelineFactories.WorkerInJVMPipelineFactory(
+        connectionPool);
 
     connectionPool.start(serverChannelFactory, serverPipelineFactory, clientChannelFactory, clientPipelineFactory,
         workerInJVMPipelineFactory, new InJVMLoopbackChannelSink());
@@ -778,18 +804,19 @@ public final class Worker {
     if (queryExecutionMode == QueryExecutionMode.NON_BLOCKING) {
       int numCPU = Runtime.getRuntime().availableProcessors();
       queryExecutor =
-      // new ThreadPoolExecutor(numCPU, numCPU, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-      // new RenamingThreadFactory("Nonblocking query executor"));
-          new ThreadAffinityFixedRoundRobinExecutionPool(numCPU,
-              new RenamingThreadFactory("Nonblocking query executor"));
+          // new ThreadPoolExecutor(numCPU, numCPU, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+          // new RenamingThreadFactory("Nonblocking query executor"));
+          new ThreadAffinityFixedRoundRobinExecutionPool(numCPU, new RenamingThreadFactory(
+              "Nonblocking query executor"));
     } else {
       // blocking query execution
       queryExecutor = Executors.newCachedThreadPool(new RenamingThreadFactory("Blocking query executor"));
     }
-    messageProcessingExecutor =
-        Executors.newCachedThreadPool(new RenamingThreadFactory("Control/Query message processor"));
+    messageProcessingExecutor = Executors.newCachedThreadPool(new RenamingThreadFactory(
+        "Control/Query message processor"));
     messageProcessingExecutor.submit(new QueryMessageProcessor());
     messageProcessingExecutor.submit(new ControlMessageProcessor());
+    // messageProcessingExecutor.submit(new ListenToOutside());
     // Periodically detect if the server (i.e., coordinator)
     // is still running. IF the server goes down, the
     // worker will stop itself
@@ -798,6 +825,7 @@ public final class Worker {
         MyriaConstants.WORKER_SHUTDOWN_CHECKER_INTERVAL, TimeUnit.MILLISECONDS);
     scheduledTaskExecutor.scheduleAtFixedRate(new HeartbeatReporter(), 0, MyriaConstants.HEARTBEAT_INTERVAL,
         TimeUnit.MILLISECONDS);
+    scheduledTaskExecutor.scheduleAtFixedRate(new OpStatsReporter(), 0, 10, TimeUnit.MILLISECONDS);
   }
 
   /**
