@@ -69,9 +69,8 @@ public class GenericEvaluator extends Evaluator {
     se.setDefaultImports(MyriaConstants.DEFAULT_JANINO_IMPORTS);
 
     try {
-      evaluator =
-          (ExpressionEvalInterface) se.createFastEvaluator(javaExpression, ExpressionEvalInterface.class, new String[] {
-              Expression.TB, Expression.ROW, Expression.RESULT, Expression.STATE });
+      evaluator = (ExpressionEvalInterface) se.createFastEvaluator(javaExpression, ExpressionEvalInterface.class,
+          new String[] { Expression.TB, Expression.ROW, Expression.RESULT, Expression.STATE });
     } catch (CompileException e) {
       LOGGER.error("Error when compiling expression {}: {}", javaExpression, e);
       throw new DbException("Error when compiling expression: " + javaExpression, e);
@@ -86,10 +85,8 @@ public class GenericEvaluator extends Evaluator {
    * @param rowIdx the row that should be used for input data
    * @param result the column that the result should be appended to
    * @param state additional state that affects the computation
-   * @throws InvocationTargetException exception thrown from janino
    */
-  public void eval(final ReadableTable tb, final int rowIdx, final WritableColumn result, final ReadableTable state)
-      throws InvocationTargetException {
+  public void eval(final ReadableTable tb, final int rowIdx, final WritableColumn result, final ReadableTable state) {
     Preconditions.checkArgument(evaluator != null,
         "Call compile first or copy the data if it is the same in the input.");
     try {

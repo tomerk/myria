@@ -20,13 +20,14 @@ public class SymmetricHashJoinEncoding extends BinaryOperatorEncoding<SymmetricH
   public boolean argSetSemanticsLeft = false;
   public boolean argSetSemanticsRight = false;
   public JoinPullOrder argOrder = JoinPullOrder.ALTER;
+  public int[] triggers;
 
   @Override
   public SymmetricHashJoin construct(final ConstructArgs args) {
-    SymmetricHashJoin join =
-        new SymmetricHashJoin(argColumnNames, null, null, argColumns1, argColumns2, argSelect1, argSelect2,
-            argSetSemanticsLeft, argSetSemanticsRight);
+    SymmetricHashJoin join = new SymmetricHashJoin(null, null, argColumns1, argColumns2, argSelect1, argSelect2,
+        argSetSemanticsLeft, argSetSemanticsRight, argColumnNames);
     join.setPullOrder(argOrder);
+    join.triggers = triggers;
     return join;
   }
 

@@ -37,10 +37,9 @@ import edu.washington.escience.myria.operator.IDBController;
 import edu.washington.escience.myria.operator.Operator;
 import edu.washington.escience.myria.operator.RootOperator;
 import edu.washington.escience.myria.operator.UpdateCatalog;
-import edu.washington.escience.myria.operator.agg.MultiGroupByAggregate;
+import edu.washington.escience.myria.operator.agg.Aggregate;
 import edu.washington.escience.myria.operator.agg.PrimitiveAggregator.AggregationOp;
-import edu.washington.escience.myria.operator.agg.SingleColumnAggregatorFactory;
-import edu.washington.escience.myria.operator.network.CollectConsumer;
+import edu.washington.escience.myria.operator.agg.PrimitiveAggregatorFactory;
 import edu.washington.escience.myria.operator.network.CollectProducer;
 import edu.washington.escience.myria.operator.network.Consumer;
 import edu.washington.escience.myria.operator.network.EOSController;
@@ -177,9 +176,8 @@ public class QueryConstruct {
         } else if (operator instanceof TempTableScanEncoding) {
           TempTableScanEncoding scan = ((TempTableScanEncoding) operator);
           scanRelation = "temporary relation " + scan.table;
-          scanWorkers =
-              server.getQueryManager().getWorkersForTempRelation(args.getQueryId(),
-                  RelationKey.ofTemp(args.getQueryId(), scan.table));
+          scanWorkers = server.getQueryManager().getWorkersForTempRelation(args.getQueryId(), RelationKey.ofTemp(args
+              .getQueryId(), scan.table));
         } else {
           continue;
         }
@@ -561,9 +559,8 @@ public class QueryConstruct {
   public static SubQuery getRelationTupleUpdateSubQuery(final Map<RelationKey, RelationWriteMetadata> relationsWritten,
       final Server server) {
     ExchangePairID collectId = ExchangePairID.newID();
-    Schema schema =
-        Schema.ofFields("userName", Type.STRING_TYPE, "programName", Type.STRING_TYPE, "relationName",
-            Type.STRING_TYPE, "tupleCount", Type.LONG_TYPE);
+    Schema schema = Schema.ofFields("userName", Type.STRING_TYPE, "programName", Type.STRING_TYPE, "relationName",
+        Type.STRING_TYPE, "tupleCount", Type.LONG_TYPE);
 
     String dbms = server.getDBMS();
     Preconditions.checkState(dbms != null, "Server must have a configured DBMS environment variable");
@@ -577,14 +574,12 @@ public class QueryConstruct {
       Set<Integer> workers = meta.getWorkers();
       RelationKey relation = meta.getRelationKey();
       for (Integer worker : workers) {
-        DbQueryScan localCount =
-            new DbQueryScan("SELECT COUNT(*) FROM " + relation.toString(dbms), Schema.ofFields("tupleCount",
-                Type.LONG_TYPE));
-        List<Expression> expressions =
-            ImmutableList.of(new Expression(schema.getColumnName(0), new ConstantExpression(relation.getUserName())),
-                new Expression(schema.getColumnName(1), new ConstantExpression(relation.getProgramName())),
-                new Expression(schema.getColumnName(2), new ConstantExpression(relation.getRelationName())),
-                new Expression(schema.getColumnName(3), new VariableExpression(0)));
+        DbQueryScan localCount = new DbQueryScan("SELECT COUNT(*) FROM " + relation.toString(dbms), Schema.ofFields(
+            "tupleCount", Type.LONG_TYPE));
+        List<Expression> expressions = ImmutableList.of(new Expression(schema.getColumnName(0), new ConstantExpression(
+            relation.getUserName())), new Expression(schema.getColumnName(1), new ConstantExpression(relation
+                .getProgramName())), new Expression(schema.getColumnName(2), new ConstantExpression(relation
+                    .getRelationName())), new Expression(schema.getColumnName(3), new VariableExpression(0)));
         Apply addRelationName = new Apply(localCount, expressions);
         CollectProducer producer = new CollectProducer(addRelationName, collectId, MyriaConstants.MASTER_ID);
         if (!workerPlans.containsKey(worker)) {
@@ -596,10 +591,9 @@ public class QueryConstruct {
     }
 
     /* Master plan: collect, sum, insert the updates. */
-    CollectConsumer consumer = new CollectConsumer(schema, collectId, workerPlans.keySet());
-    MultiGroupByAggregate aggCounts =
-        new MultiGroupByAggregate(consumer, new int[] { 0, 1, 2 }, new SingleColumnAggregatorFactory(3,
-            AggregationOp.SUM));
+    Consumer consumer = new Consumer(schema, collectId, workerPlans.keySet());
+    Aggregate aggCounts = new Aggregate(consumer, new int[] { 0, 1, 2 }, new PrimitiveAggregatorFactory(3,
+        AggregationOp.SUM));
     UpdateCatalog catalog = new UpdateCatalog(aggCounts, server);
     SubQueryPlan masterPlan = new SubQueryPlan(catalog);
 

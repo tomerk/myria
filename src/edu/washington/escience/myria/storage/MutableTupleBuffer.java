@@ -54,7 +54,7 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
 
   /**
    * clear this TBB.
-   * */
+   */
   public final void clear() {
     columnsReady.clear();
     currentBuildingColumns = null;
@@ -65,7 +65,6 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
 
   /**
    * Makes a batch of any tuples in the buffer and appends it to the internal list.
-   * 
    */
   private void finishBatch() {
     Preconditions.checkArgument(numColumnsReady == 0);
@@ -206,7 +205,7 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
   /**
    * @param row the row number
    * @return the index of the row in the containing TB.
-   * */
+   */
   public final int getTupleIndexInContainingTB(final int row) {
     return row % TupleBatch.BATCH_SIZE;
   }
@@ -327,7 +326,7 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
    * @param sourceColumn the column from which data will be retrieved.
    * @param sourceRow the row in the source column from which data will be retrieved.
    */
-  public final void put(final int destColumn, final Column<?> sourceColumn, final int sourceRow) {
+  public final void put(final int destColumn, final ReadableColumn sourceColumn, final int sourceRow) {
     TupleUtils.copyValue(sourceColumn, sourceRow, this, destColumn);
   }
 
@@ -417,20 +416,11 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
    * @param sourceColumn the column from which data will be retrieved.
    * @param sourceRow the row in the source column from which data will be retrieved.
    */
-  public final void replace(final int destColumn, final int destRow, final Column<?> sourceColumn, final int sourceRow) {
-    checkPutIndex(destColumn);
-    int tupleBatchIndex = destRow / TupleBatch.BATCH_SIZE;
+  public final void replace(final int destColumn, final int destRow, final ReadableColumn sourceColumn,
+      final int sourceRow) {
+    checkRowIndex(destRow);
     int tupleIndex = destRow % TupleBatch.BATCH_SIZE;
-    if (tupleBatchIndex > readyTuples.size() || tupleBatchIndex == readyTuples.size()
-        && tupleIndex >= currentInProgressTuples) {
-      throw new IndexOutOfBoundsException();
-    }
-    ReplaceableColumn dest;
-    if (tupleBatchIndex < readyTuples.size()) {
-      dest = readyTuples.get(tupleBatchIndex)[destColumn];
-    } else {
-      dest = currentBuildingColumns[destColumn];
-    }
+    ReplaceableColumn dest = getColumn(destColumn, destRow);
 
     switch (dest.getType()) {
       case BOOLEAN_TYPE:
@@ -481,7 +471,7 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
    * Build the in progress columns. The builders' states are untouched. They can keep building.
    * 
    * @return the built in progress columns.
-   * */
+   */
   private List<Column<?>> getInProgressColumns() {
     List<Column<?>> newColumns = new ArrayList<Column<?>>(currentBuildingColumns.length);
     for (ColumnBuilder<?> cb : currentBuildingColumns) {
@@ -517,5 +507,29 @@ public class MutableTupleBuffer implements ReadableTable, AppendableTable, Clone
   @Override
   public WritableColumn asWritableColumn(final int column) {
     return new WritableSubColumn(this, column);
+  }
+
+  /**
+   * @param row the row index.
+   */
+  private void checkRowIndex(final int row) {
+    if (row >= numTuples()) {
+      throw new IndexOutOfBoundsException();
+    }
+  }
+
+  /**
+   * @param column the column index.
+   * @param row the row index.
+   * @return a Replaceable Column that stores the given field.
+   */
+  public final ReplaceableColumn getColumn(final int column, final int row) {
+    checkRowIndex(row);
+    int tupleBatchIndex = row / TupleBatch.BATCH_SIZE;
+    if (tupleBatchIndex < readyTuples.size()) {
+      return readyTuples.get(tupleBatchIndex)[column];
+    } else {
+      return currentBuildingColumns[column];
+    }
   }
 }

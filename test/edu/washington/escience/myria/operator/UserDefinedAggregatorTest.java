@@ -48,8 +48,8 @@ public class UserDefinedAggregatorTest {
     }
 
     Expression initializer = new Expression("counter", new ConstantExpression(0L));
-    Expression increment =
-        new Expression("counter", new PlusExpression(new StateExpression(0), new ConstantExpression(1L)));
+    Expression increment = new Expression("counter", new PlusExpression(new StateExpression(0), new ConstantExpression(
+        1L)));
     Expression emitter = new Expression("index", new StateExpression(0));
 
     ImmutableList.Builder<Expression> Initializers = ImmutableList.builder();
@@ -61,11 +61,11 @@ public class UserDefinedAggregatorTest {
     ImmutableList.Builder<Expression> Emitters = ImmutableList.builder();
     Emitters.add(emitter);
 
-    AggregatorFactory factory =
-        new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters.build());
+    AggregatorFactory factory = new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters
+        .build());
     factory = reader.readValue(writer.writeValueAsString(factory));
 
-    Aggregate agg = new Aggregate(new TupleSource(tbb), factory);
+    Aggregate agg = new Aggregate(new TupleSource(tbb), new int[] {}, factory);
     agg.open(TestEnvVars.get());
     TupleBatch result;
     int resultSize = 0;
@@ -98,8 +98,8 @@ public class UserDefinedAggregatorTest {
     }
 
     Expression initializer = new Expression("counter", new ConstantExpression(0L));
-    Expression increment =
-        new Expression("counter", new PlusExpression(new StateExpression(0), new ConstantExpression(1L)));
+    Expression increment = new Expression("counter", new PlusExpression(new StateExpression(0), new ConstantExpression(
+        1L)));
     Expression emitter = new Expression("index", new StateExpression(0));
     Expression constEmitter = new Expression("const", new ConstantExpression(5L));
 
@@ -113,11 +113,11 @@ public class UserDefinedAggregatorTest {
     Emitters.add(emitter);
     Emitters.add(constEmitter);
 
-    AggregatorFactory factory =
-        new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters.build());
+    AggregatorFactory factory = new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters
+        .build());
     factory = reader.readValue(writer.writeValueAsString(factory));
 
-    Aggregate agg = new Aggregate(new TupleSource(tbb), factory);
+    Aggregate agg = new Aggregate(new TupleSource(tbb), new int[] {}, factory);
     agg.open(TestEnvVars.get());
     TupleBatch result;
     int resultSize = 0;
@@ -169,11 +169,11 @@ public class UserDefinedAggregatorTest {
     Emitters.add(new Expression("indexOfMax", new StateExpression(1)));
     Emitters.add(new Expression("max", new StateExpression(2)));
 
-    AggregatorFactory factory =
-        new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters.build());
+    AggregatorFactory factory = new UserDefinedAggregatorFactory(Initializers.build(), Updaters.build(), Emitters
+        .build());
     factory = reader.readValue(writer.writeValueAsString(factory));
 
-    Aggregate agg = new Aggregate(new TupleSource(tbb), factory);
+    Aggregate agg = new Aggregate(new TupleSource(tbb), new int[] {}, factory);
     agg.open(TestEnvVars.get());
     TupleBatch result;
     int resultSize = 0;

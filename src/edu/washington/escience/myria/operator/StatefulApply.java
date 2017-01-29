@@ -65,8 +65,8 @@ public class StatefulApply extends Apply {
     super(child, emitExpression);
     Preconditions.checkArgument(initializerExpressions.size() == updaterExpressions.size());
     for (int i = 0; i < initializerExpressions.size(); i++) {
-      Preconditions.checkArgument(updaterExpressions.get(i).getOutputName() == null
-          || initializerExpressions.get(i).getOutputName().equals(updaterExpressions.get(i).getOutputName()));
+      Preconditions.checkArgument(updaterExpressions.get(i).getOutputName() == null || initializerExpressions.get(i)
+          .getOutputName().equals(updaterExpressions.get(i).getOutputName()));
     }
     setInitExpressions(initializerExpressions);
     setUpdateExpressions(updaterExpressions);
@@ -125,7 +125,7 @@ public class StatefulApply extends Apply {
       // update state
       Tuple newState = new Tuple(getStateSchema());
       for (int columnIdx = 0; columnIdx < stateSchema.numColumns(); columnIdx++) {
-        updateEvaluators.get(columnIdx).eval(tb, rowIdx, newState.getColumn(columnIdx), state);
+        updateEvaluators.get(columnIdx).eval(tb, rowIdx, newState.asWritableColumn(columnIdx), state);
       }
       state = newState;
       // apply expression
@@ -153,8 +153,8 @@ public class StatefulApply extends Apply {
     ArrayList<GenericEvaluator> evaluators = new ArrayList<>();
     evaluators.ensureCapacity(getEmitExpressions().size());
     for (Expression expr : getEmitExpressions()) {
-      GenericEvaluator evaluator =
-          new GenericEvaluator(expr, new ExpressionOperatorParameter(inputSchema, getStateSchema(), getNodeID()));
+      GenericEvaluator evaluator = new GenericEvaluator(expr, new ExpressionOperatorParameter(inputSchema,
+          getStateSchema(), getNodeID()));
       if (evaluator.needsCompiling()) {
         evaluator.compile();
       }
@@ -169,15 +169,15 @@ public class StatefulApply extends Apply {
 
     for (int columnIdx = 0; columnIdx < getStateSchema().numColumns(); columnIdx++) {
       Expression expr = initExpressions.get(columnIdx);
-      ConstantEvaluator evaluator =
-          new ConstantEvaluator(expr, new ExpressionOperatorParameter(inputSchema, getNodeID()));
+      ConstantEvaluator evaluator = new ConstantEvaluator(expr, new ExpressionOperatorParameter(inputSchema,
+          getNodeID()));
       evaluator.compile();
-      state.set(columnIdx, evaluator.eval());
+      state.putObject(columnIdx, evaluator.eval());
     }
 
     for (Expression expr : updateExpressions) {
-      GenericEvaluator evaluator =
-          new GenericEvaluator(expr, new ExpressionOperatorParameter(inputSchema, getStateSchema(), getNodeID()));
+      GenericEvaluator evaluator = new GenericEvaluator(expr, new ExpressionOperatorParameter(inputSchema,
+          getStateSchema(), getNodeID()));
       evaluator.compile();
       updateEvaluators.add(evaluator);
     }
