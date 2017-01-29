@@ -52,6 +52,8 @@ public final class SymmetricHashJoin extends BinaryOperator {
   /** if the hash table of the right child should use set semantics. */
   private boolean setSemanticsRight = false;
 
+  public int[] triggers;
+
   /**
    * Construct an SymmetricHashJoin operator. It returns the specified columns from both children when the corresponding
    * columns in compareIndx1 and compareIndx2 match.
@@ -407,6 +409,7 @@ public final class SymmetricHashJoin extends BinaryOperator {
   @Override
   public void init(final ImmutableMap<String, Object> execEnvVars) throws DbException {
     leftHashTable = new TupleHashTable(getLeft().getSchema(), leftCompareIndx);
+    leftHashTable.triggers = triggers;
     rightHashTable = new TupleHashTable(getRight().getSchema(), rightCompareIndx);
     ans = new TupleBatchBuffer(getSchema());
     nonBlocking =

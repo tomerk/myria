@@ -26,6 +26,8 @@ public final class TupleHashTable implements Serializable {
   /** Key column indices. */
   private final int[] keyColumns;
 
+  public int[] triggers;
+
   /**
    * @param schema schema
    * @param keyColumns key column indices
@@ -112,6 +114,10 @@ public final class TupleHashTable implements Serializable {
         data.put(i, tb.getDataColumns().get(i), row);
       }
     }
+    for (int t : triggers)
+      if (numTuples() == t) {
+        System.gc();
+      }
   }
 
   /**

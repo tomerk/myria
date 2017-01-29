@@ -16,6 +16,7 @@ public class SymmetricHashJoinEncoding extends BinaryOperatorEncoding<SymmetricH
   public boolean argSetSemanticsLeft = false;
   public boolean argSetSemanticsRight = false;
   public JoinPullOrder argOrder = JoinPullOrder.ALTER;
+  public int[] triggers;
 
   @Override
   public SymmetricHashJoin construct(final ConstructArgs args) {
@@ -31,6 +32,7 @@ public class SymmetricHashJoinEncoding extends BinaryOperatorEncoding<SymmetricH
             argSetSemanticsRight,
             argColumnNames);
     join.setPullOrder(argOrder);
+    join.triggers = triggers;
     return join;
   }
 }
