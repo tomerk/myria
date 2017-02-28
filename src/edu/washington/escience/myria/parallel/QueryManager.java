@@ -123,6 +123,8 @@ public class QueryManager {
       throw new DbException("Error finishing query " + queryState.getQueryId(), e);
     } finally {
       runningQueries.remove(queryState.getQueryId());
+      /* Clean myself to provide a fresh start to the next query. */
+      System.gc();
 
       /* See if we can submit a new query. */
       if (!runningQueries.isEmpty()) {
